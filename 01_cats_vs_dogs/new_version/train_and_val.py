@@ -33,9 +33,11 @@ import input_train_val_split
 import model
 
 
+from pathlib import Path
+
 
     
-#%%
+
 
 N_CLASSES = 2
 IMG_W = 208  # resize the image, if the input image is too large, training will be very slow.
@@ -48,14 +50,21 @@ learning_rate = 0.0001 # with current parameters, it is suggested to use learnin
 
 
 #%%
-def run_training():
-    #incase you want to run twice reset graph
+def run_training(home_path):
+    #TODO:
+    #how to reset twice reset graph
     #tf.reset_default_graph()
-    # you need to change the directories to yours.
-    train_dir = '/home/stephen/DL/frameworks/tensorflow/My-TensorFlow-tutorials/01_cats_vs_dogs/data/train/'
-    logs_train_dir = '/home/stephen/DL/frameworks/tensorflow/My-TensorFlow-tutorials/01_cats_vs_dogs/logs/train/'
-    logs_val_dir = '/home/stephen/DL/frameworks/tensorflow/My-TensorFlow-tutorials/01_cats_vs_dogs/logs/val/'
     
+    #setup train and logging folders
+    train_dir = os.path.join(home_path ,'data','train')
+    logs_train_dir = os.path.join(home_path ,'logs','train') 
+    logs_val_dir =  os.path.join(home_path ,'logs','val') 
+    
+    p = Path(train_dir )
+    if(p.exists()==True):
+        print("Error ",train_dir)
+        
+        
     train, train_label, val, val_label = input_train_val_split.get_files(train_dir, RATIO)
     train_batch, train_label_batch = input_train_val_split.get_batch(train,
                                                   train_label,
@@ -77,12 +86,7 @@ def run_training():
     
     x = tf.placeholder(tf.float32, shape=[BATCH_SIZE, IMG_W, IMG_H, 3])
     y_ = tf.placeholder(tf.int32, shape=[BATCH_SIZE])
-    
-    #fails
-    #logits = model.inference(x, BATCH_SIZE, N_CLASSES)
-    #loss = model.losses(logits, y_)  
-    #acc = model.evaluation(logits, y_)
-    #train_op = model.trainning(loss, learning_rate)
+
               
     with tf.Session() as sess:
         saver = tf.train.Saver()
@@ -132,73 +136,78 @@ def run_training():
 # when training, comment the following codes.
 
 
-#from PIL import Image
-#import matplotlib.pyplot as plt
-#
-#def get_one_image(train):
-#    '''Randomly pick one image from training data
-#    Return: ndarray
-#    '''
-#    n = len(train)
-#    ind = np.random.randint(0, n)
-#    img_dir = train[ind]
-#
-#    image = Image.open(img_dir)
-#    plt.imshow(image)
-#    image = image.resize([208, 208])
-#    image = np.array(image)
-#    return image
-#
-#def evaluate_one_image():
-#    '''Test one image against the saved models and parameters
-#    '''
-#    
-#    # you need to change the directories to yours.
-#    train_dir = '/home/kevin/tensorflow/cats_vs_dogs/data/train/'
-#    train, train_label = input_data.get_files(train_dir)
-#    image_array = get_one_image(train)
-#    
-#    with tf.Graph().as_default():
-#        BATCH_SIZE = 1
-#        N_CLASSES = 2
-#        
-#        image = tf.cast(image_array, tf.float32)
-#        image = tf.image.per_image_standardization(image)
-#        image = tf.reshape(image, [1, 208, 208, 3])
-#        
-#        logit = model.inference(image, BATCH_SIZE, N_CLASSES)
-#        
-#        logit = tf.nn.softmax(logit)
-#        
-#        x = tf.placeholder(tf.float32, shape=[208, 208, 3])
-#        
-#        # you need to change the directories to yours.
-#        logs_train_dir = '/home/kevin/tensorflow/cats_vs_dogs/logs/train/' 
-#                       
-#        saver = tf.train.Saver()
-#        
-#        with tf.Session() as sess:
-#            
-#            print("Reading checkpoints...")
-#            ckpt = tf.train.get_checkpoint_state(logs_train_dir)
-#            if ckpt and ckpt.model_checkpoint_path:
-#                global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
-#                saver.restore(sess, ckpt.model_checkpoint_path)
-#                print('Loading success, global_step is %s' % global_step)
-#            else:
-#                print('No checkpoint file found')
-#            
-#            prediction = sess.run(logit, feed_dict={x: image_array})
-#            max_index = np.argmax(prediction)
-#            if max_index==0:
-#                print('This is a cat with possibility %.6f' %prediction[:, 0])
-#            else:
-#                print('This is a dog with possibility %.6f' %prediction[:, 1])
+from PIL import Image
+import matplotlib.pyplot as plt
 
+def get_one_image(train):
+    '''Randomly pick one image from training data
+    Return: ndarray
+    '''
+    n = len(train)
+    ind = np.random.randint(0, n)
+    img_dir = train[ind]
 
-#%%
+    image = Image.open(img_dir)
+    plt.imshow(image)
+    image = image.resize([208, 208])
+    image = np.array(image)
+    return image
+
+def evaluate_one_image():
+    '''Test one image against the saved models and parameters
+    '''
+    
+    # you need to change the directories to yours.
+    train_dir = '/home/kevin/tensorflow/cats_vs_dogs/data/train/'
+    train, train_label = input_data.get_files(train_dir)
+    image_array = get_one_image(train)
+    
+    with tf.Graph().as_default():
+        BATCH_SIZE = 2
+        N_CLASSES = 2
+        
+        image = tf.cast(image_array, tf.float32)
+        image = tf.image.per_image_standardization(image)
+        image = tf.reshape(image, [1, 208, 208, 3])
+        
+        logit = model.inference(image, BATCH_SIZE, N_CLASSES)
+        
+        logit = tf.nn.softmax(logit)
+        
+        x = tf.placeholder(tf.float32, shape=[208, 208, 3])
+        
+        # you need to change the directories to yours.
+        logs_train_dir = '/home/kevin/tensorflow/cats_vs_dogs/logs/train/' 
+                       
+        saver = tf.train.Saver()
+        
+        with tf.Session() as sess:
+            
+            print("Reading checkpoints...")
+            ckpt = tf.train.get_checkpoint_state(logs_train_dir)
+            if ckpt and ckpt.model_checkpoint_path:
+                global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
+                saver.restore(sess, ckpt.model_checkpoint_path)
+                print('Loading success, global_step is %s' % global_step)
+            else:
+                print('No checkpoint file found')
+            
+            prediction = sess.run(logit, feed_dict={x: image_array})
+            max_index = np.argmax(prediction)
+            if max_index==0:
+                printrt('This is a cat with possibility %.6f' %prediction[:, 0])
+            else:
+                print('This is a dog with possibility %.6f' %prediction[:, 1])
 
 
 
 
+
+
+if __name__ == "__main__":
+    
+    current_dirpath = os.path.dirname(os.path.realpath(__file__))
+    dirpath = cwd = os.getcwd()
+    print("Working directory is : " + dirpath)
+    run_training(dirpath)
 

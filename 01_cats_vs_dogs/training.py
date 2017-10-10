@@ -47,8 +47,8 @@ learning_rate = 0.0001 # with current parameters, it is suggested to use learnin
 def run_training():
     
     # you need to change the directories to yours.
-    train_dir = '/home/kevin/tensorflow/cats_vs_dogs/data/train/'
-    logs_train_dir = '/home/kevin/tensorflow/cats_vs_dogs/logs/train/'
+    train_dir = '/home/stephen/DL/frameworks/tensorflow/My-TensorFlow-tutorials/01_cats_vs_dogs/data/train/'
+    logs_train_dir = '/home/stephen/DL/frameworks/tensorflow/My-TensorFlow-tutorials/01_cats_vs_dogs/logs/train/'
     
     train, train_label = input_data.get_files(train_dir)
     

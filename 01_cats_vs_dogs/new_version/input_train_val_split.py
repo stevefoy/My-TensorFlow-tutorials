@@ -25,14 +25,14 @@
 # Otherwise errors may occur: conv1/weights/biases already exist......
 
 
-#%%
+
 
 import tensorflow as tf
 import numpy as np
 import os
 import math
+import matplotlib.pyplot as plt
 
-#%%
 
 # you need to change this to your data directory
 train_dir = '/home/stephen/DL/frameworks/tensorflow/My-TensorFlow-tutorials/01_cats_vs_dogs/data/train/'
@@ -51,10 +51,10 @@ def get_files(file_dir, ratio):
     for file in os.listdir(file_dir):
         name = file.split(sep='.')
         if name[0]=='cat':
-            cats.append(file_dir + file)
+            cats.append(os.path.join(file_dir , file))
             label_cats.append(0)
         else:
-            dogs.append(file_dir + file)
+            dogs.append(os.path.join(file_dir , file))
             label_dogs.append(1)
     print('There are %d cats\nThere are %d dogs' %(len(cats), len(dogs)))
     
@@ -104,10 +104,12 @@ def get_batch(image, label, image_W, image_H, batch_size, capacity):
     label = tf.cast(label, tf.int32)
 
     # make an input queue
-    input_queue = tf.train.slice_input_producer([image, label])
+    input_queue = tf.train.slice_input_producer([image, label],num_epochs=None,shuffle=True,seed=None,capacity=32,shared_name=None,name=None)
     
-    label = input_queue[1]
+    
     image_contents = tf.read_file(input_queue[0])
+    label = input_queue[1]
+    
     image = tf.image.decode_jpeg(image_contents, channels=3)
     
     ######################################
@@ -137,48 +139,44 @@ def get_batch(image, label, image_W, image_H, batch_size, capacity):
 # To test the generated batches of images
 # When training the model, DO comment the following codes
 
+def test_input():
+    BATCH_SIZE = 2
+    CAPACITY = 256
+    IMG_W = 208
+    IMG_H = 208
+    
+   
+    ratio = 0.2
+    tra_images, tra_labels, val_images, val_labels = get_files(train_dir, ratio)
+    tra_image_batch, tra_label_batch = get_batch(tra_images, tra_labels, IMG_W, IMG_H, BATCH_SIZE, CAPACITY)
+    
+    
+    
+    with tf.Session() as sess:
+        i = 0
+        coord = tf.train.Coordinator()
+        threads = tf.train.start_queue_runners(coord=coord)
+        
+        try:
+            while not coord.should_stop() and i<1:
+                
+                img, label = sess.run([tra_image_batch, tra_label_batch])
+                
+                # just test one batch
+                for j in np.arange(BATCH_SIZE):
+                    print('label: %d' %label[j])
+                    plt.imshow(img[j,:,:,:])
+                    plt.show()
+                i+=1
+                
+        except tf.errors.OutOfRangeError:
+            print('done!')
+        finally:
+            coord.request_stop()
+        coord.join(threads)
 
 
 
-#import matplotlib.pyplot as plt
-#
-#BATCH_SIZE = 2
-#CAPACITY = 256
-#IMG_W = 208
-#IMG_H = 208
-#
-#train_dir = '/home/kevin/tensorflow/cats_vs_dogs/data/train/'
-#ratio = 0.2
-#tra_images, tra_labels, val_images, val_labels = get_files(train_dir, ratio)
-#tra_image_batch, tra_label_batch = get_batch(tra_images, tra_labels, IMG_W, IMG_H, BATCH_SIZE, CAPACITY)
-#
-#
-#
-#with tf.Session() as sess:
-#    i = 0
-#    coord = tf.train.Coordinator()
-#    threads = tf.train.start_queue_runners(coord=coord)
-#    
-#    try:
-#        while not coord.should_stop() and i<1:
-#            
-#            img, label = sess.run([tra_image_batch, tra_label_batch])
-#            
-#            # just test one batch
-#            for j in np.arange(BATCH_SIZE):
-#                print('label: %d' %label[j])
-#                plt.imshow(img[j,:,:,:])
-#                plt.show()
-#            i+=1
-#            
-#    except tf.errors.OutOfRangeError:
-#        print('done!')
-#    finally:
-#        coord.request_stop()
-#    coord.join(threads)
-
-
-#%%
 
 
 
