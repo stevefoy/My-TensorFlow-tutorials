@@ -32,6 +32,9 @@ import tensorflow as tf
 import input_train_val_split
 import model
 
+
+
+    
 #%%
 
 N_CLASSES = 2
@@ -46,11 +49,12 @@ learning_rate = 0.0001 # with current parameters, it is suggested to use learnin
 
 #%%
 def run_training():
-    
+    #incase you want to run twice reset graph
+    #tf.reset_default_graph()
     # you need to change the directories to yours.
-    train_dir = '/home/kevin/tensorflow/cats_vs_dogs/data/train/'
-    logs_train_dir = '/home/kevin/tensorflow/cats_vs_dogs/logs/train/'
-    logs_val_dir = '/home/kevin/tensorflow/cats_vs_dogs/logs/val/'
+    train_dir = '/home/stephen/DL/frameworks/tensorflow/My-TensorFlow-tutorials/01_cats_vs_dogs/data/train/'
+    logs_train_dir = '/home/stephen/DL/frameworks/tensorflow/My-TensorFlow-tutorials/01_cats_vs_dogs/logs/train/'
+    logs_val_dir = '/home/stephen/DL/frameworks/tensorflow/My-TensorFlow-tutorials/01_cats_vs_dogs/logs/val/'
     
     train, train_label, val, val_label = input_train_val_split.get_files(train_dir, RATIO)
     train_batch, train_label_batch = input_train_val_split.get_batch(train,
@@ -66,18 +70,20 @@ def run_training():
                                                   BATCH_SIZE, 
                                                   CAPACITY)
     
-
+    logits = model.inference(train_batch, BATCH_SIZE, N_CLASSES)
+    loss = model.losses(logits, train_label_batch)        
+    train_op = model.trainning(loss, learning_rate)
+    acc = model.evaluation(logits, train_label_batch)
     
     x = tf.placeholder(tf.float32, shape=[BATCH_SIZE, IMG_W, IMG_H, 3])
-    y_ = tf.placeholder(tf.int16, shape=[BATCH_SIZE])
+    y_ = tf.placeholder(tf.int32, shape=[BATCH_SIZE])
     
-    logits = model.inference(x, BATCH_SIZE, N_CLASSES)
-    loss = model.losses(logits, y_)  
-    acc = model.evaluation(logits, y_)
-    train_op = model.trainning(loss, learning_rate)
-    
-    
-             
+    #fails
+    #logits = model.inference(x, BATCH_SIZE, N_CLASSES)
+    #loss = model.losses(logits, y_)  
+    #acc = model.evaluation(logits, y_)
+    #train_op = model.trainning(loss, learning_rate)
+              
     with tf.Session() as sess:
         saver = tf.train.Saver()
         sess.run(tf.global_variables_initializer())
@@ -87,13 +93,14 @@ def run_training():
         summary_op = tf.summary.merge_all()        
         train_writer = tf.summary.FileWriter(logs_train_dir, sess.graph)
         val_writer = tf.summary.FileWriter(logs_val_dir, sess.graph)
-    
+         
         try:
             for step in np.arange(MAX_STEP):
                 if coord.should_stop():
                         break
                 
                 tra_images,tra_labels = sess.run([train_batch, train_label_batch])
+                
                 _, tra_loss, tra_acc = sess.run([train_op, loss, acc],
                                                 feed_dict={x:tra_images, y_:tra_labels})
                 if step % 50 == 0:
@@ -118,6 +125,7 @@ def run_training():
         finally:
             coord.request_stop()           
         coord.join(threads)
+    sess.close()
 
 
 #%% Evaluate one image

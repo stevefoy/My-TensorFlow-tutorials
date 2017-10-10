@@ -35,7 +35,7 @@ import math
 #%%
 
 # you need to change this to your data directory
-train_dir = '/home/kevin/tensorflow/cats_vs_dogs/data/train/'
+train_dir = '/home/stephen/DL/frameworks/tensorflow/My-TensorFlow-tutorials/01_cats_vs_dogs/data/train/'
 
 def get_files(file_dir, ratio):
     '''
